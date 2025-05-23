@@ -12,10 +12,11 @@ const SetoresList = () => {
   const [filterField, setFilterField] = useState('all');
   const { user } = useContext(AuthContext);
   
-  // Force isAdmin to true so CRUD buttons always appear
-  const isAdmin = true;
+  // Only show admin controls if user is logged in
+  const isAdmin = user ? true : false;
   
   useEffect(() => {
+    // Allow fetching sectors for all users, including non-logged in users
     fetchSetores();
   }, []);
 
@@ -91,21 +92,7 @@ const SetoresList = () => {
       <h2>Setores da PMCE</h2>
       {error && <div className="alert alert-danger">{error}</div>}
       
-      {/* Debug information */}
-      <div className="alert alert-info mb-3">
-        <p>Status de autenticação: {user ? 'Autenticado' : 'Não autenticado'}</p>
-        <p>Permissões de admin: {isAdmin ? 'Sim' : 'Não'}</p>
-        <button 
-          className="btn btn-sm btn-warning" 
-          onClick={() => {
-            // Force admin status for testing
-            localStorage.setItem('user', JSON.stringify({...user, isAdmin: true}));
-            window.location.reload();
-          }}
-        >
-          Forçar permissões de admin
-        </button>
-      </div>
+      {/* Remove debug information */}
       
       {isAdmin && (
         <Link to="/setores/novo" className="btn btn-primary mb-3">
@@ -152,7 +139,6 @@ const SetoresList = () => {
         <table className="table table-striped table-hover">
           <thead className="table-dark">
             <tr>
-              {/* <th>Nome do Local</th> */}
               <th>Batalhão/Companhia</th>
               <th>Comandante</th>
               <th>Telefone</th>
@@ -164,7 +150,6 @@ const SetoresList = () => {
             {filteredSetores.length > 0 ? (
               filteredSetores.map((setor) => (
                 <tr key={setor._id}>
-                  {/* <td>{setor.nome}</td> */}
                   <td>{setor.battalion}</td>
                   <td>{setor.commander}</td>
                   <td>{setor.phone}</td>
