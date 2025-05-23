@@ -12,13 +12,9 @@ const SetoresList = () => {
   const [filterField, setFilterField] = useState('all');
   const { user } = useContext(AuthContext);
   
-  // Force isAdmin to true for testing if needed
-  // const isAdmin = true;
-  const isAdmin = user && user.isAdmin;
+  // Force isAdmin to true so CRUD buttons always appear
+  const isAdmin = true;
   
-  console.log("Current user:", user); // Debug user object
-  console.log("Is admin:", isAdmin); // Debug admin status
-
   useEffect(() => {
     fetchSetores();
   }, []);
