@@ -21,9 +21,9 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
-            <Route path="/setores" element={<SetoresList />} />
+            <Route path="/sectors" element={<SetoresList />} />
             <Route 
-              path="/setores/novo" 
+              path="/sectors/new" 
               element={
                 <ProtectedRoute adminOnly={true}>
                   <SetorForm />
@@ -31,12 +31,8 @@ function App() {
               } 
             />
             <Route 
-              path="/setores/editar/:id" 
-              element={
-                <ProtectedRoute adminOnly={true}>
-                  <SetorForm />
-                </ProtectedRoute>
-              } 
+              path="/sectors/edit/:id" 
+              element={<SetorForm />} 
             />
           </Routes>
         </main>

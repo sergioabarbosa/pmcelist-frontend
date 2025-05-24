@@ -11,15 +11,31 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
     
+    console.log('AuthContext - Token:', token);
+    console.log('AuthContext - Stored User:', storedUser);
+    
     if (token) {
       try {
         // For mock token
         if (token === 'mock-jwt-token' && storedUser) {
-          setUser(JSON.parse(storedUser));
+          const userData = JSON.parse(storedUser);
+          console.log('AuthContext - Mock user loaded:', userData);
+          setUser(userData);
         } else {
           // For real JWT token
           const decoded = jwtDecode(token);
-          setUser(decoded);
+          console.log('AuthContext - JWT decoded:', decoded);
+          
+          // Se temos dados do usuário salvos no localStorage, use eles
+          // (pois o JWT pode não ter todas as informações como isAdmin)
+          if (storedUser) {
+            const userData = JSON.parse(storedUser);
+            console.log('AuthContext - Using stored user data:', userData);
+            setUser(userData);
+          } else {
+            // Se não temos dados salvos, use só o JWT decodificado
+            setUser(decoded);
+          }
         }
       } catch (error) {
         console.error('Invalid token', error);
@@ -31,21 +47,28 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (token, userData = null) => {
+    console.log('AuthContext - Logging in with token:', token);
+    console.log('AuthContext - User data provided:', userData);
+    
     localStorage.setItem('token', token);
     
-    // For mock token
-    if (token === 'mock-jwt-token' && userData) {
+    // SEMPRE salve os dados do usuário se fornecidos
+    if (userData) {
+      console.log('AuthContext - Saving user data to localStorage:', userData);
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
       return;
     }
     
-    // For real JWT token
-    try {
-      const decoded = jwtDecode(token);
-      setUser(decoded);
-    } catch (error) {
-      console.error('Error decoding token', error);
+    // Se não temos userData, tente decodificar o JWT
+    if (token !== 'mock-jwt-token') {
+      try {
+        const decoded = jwtDecode(token);
+        console.log('AuthContext - JWT decoded during login:', decoded);
+        setUser(decoded);
+      } catch (error) {
+        console.error('Error decoding token', error);
+      }
     }
   };
 

@@ -33,7 +33,7 @@ const Navbar = () => {
               </Link>
             </li>
             <li className="nav-item">
-              <Link className="nav-link" to="/setores">
+              <Link className="nav-link" to="/sectors">
                 Setores
               </Link>
             </li>
@@ -41,7 +41,7 @@ const Navbar = () => {
               <>
                 {user.isAdmin && (
                   <li className="nav-item">
-                    <Link className="nav-link" to="/setores/novo">
+                    <Link className="nav-link" to="/sectors/new">
                       Novo Setor
                     </Link>
                   </li>

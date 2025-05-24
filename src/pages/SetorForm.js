@@ -94,7 +94,7 @@ const SetorForm = () => {
         await createSetor(formData);
       }
       
-      navigate('/setores');
+      navigate('/sectors');
     } catch (err) {
       setError(err.message || 'Erro ao salvar o setor. Por favor, tente novamente.');
       console.error(err);
@@ -258,7 +258,7 @@ const SetorForm = () => {
           <button
             type="button"
             className="btn btn-secondary"
-            onClick={() => navigate('/setores')}
+            onClick={() => navigate('/sectors')}
           >
             Cancelar
           </button>

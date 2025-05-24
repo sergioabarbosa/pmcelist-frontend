@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { getSetores, deleteSetor } from '../services/api';
+import { getSetores, deleteSetor, updateSetor } from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 
 const SetoresList = () => {
@@ -12,12 +12,23 @@ const SetoresList = () => {
   const [filterField, setFilterField] = useState('all');
   const [expandedRows, setExpandedRows] = useState({});
   const { user } = useContext(AuthContext);
-  
-  // Force isAdmin to true for development/testing
-  const isAdmin = true; // This will make the CRUD buttons visible
+
+  // Debug: Log user info to check what we're getting
+  console.log('User object:', user);
+  console.log('User isAdmin:', user?.isAdmin);
+  console.log('All user properties:', Object.keys(user || {}));
+
+  // Determine isAdmin based on user context - check multiple possible properties
+  const isAdmin = user && (
+    user.isAdmin === true || 
+    user.isAdmin === 'true' || 
+    user.role === 'admin' || 
+    user.type === 'admin' ||
+    user.admin === true ||
+    user.admin === 'true'
+  );
   
   useEffect(() => {
-    // Allow fetching sectors for all users, including non-logged in users
     fetchSetores();
   }, []);
 
@@ -73,15 +84,50 @@ const SetoresList = () => {
   };
 
   const handleDelete = async (id) => {
-    // Remove the user check since we're forcing isAdmin to true for testing
+    // Verificação adicional de segurança
+    if (!isAdmin) {
+      setError('Você não tem permissão para excluir setores.');
+      return;
+    }
+    
+    console.log(`Attempting to delete sector with ID: ${id}`);
     if (window.confirm('Tem certeza que deseja excluir este setor?')) {
       try {
+        console.log(`Attempting to delete sector with ID: ${id}`);
         await deleteSetor(id);
-        setSetores(setores.filter((setor) => setor._id !== id));
+        console.log('Delete successful, updating UI');
+        
+        // Update both state variables
+        const updatedSetores = setores.filter((setor) => setor._id !== id);
+        setSetores(updatedSetores);
+        setFilteredSetores(filteredSetores.filter((setor) => setor._id !== id));
+        
+        setError('');
       } catch (err) {
         setError(err.message || 'Erro ao excluir o setor. Por favor, tente novamente.');
-        console.error(err);
+        console.error('Delete error:', err);
       }
+    }
+  };
+
+  const handleUpdate = async (id, updatedData) => {
+    // Verificação adicional de segurança
+    if (!isAdmin) {
+      setError('Você não tem permissão para atualizar setores.');
+      return;
+    }
+    
+    console.log(`Updating sector with ID: ${id}`, updatedData);
+    try {
+      console.log(`Updating sector with ID: ${id}`, updatedData);
+      await updateSetor(id, updatedData);
+      
+      // Refresh the list after update
+      fetchSetores();
+      setError('');
+    } catch (err) {
+      setError(err.message || 'Erro ao atualizar o setor. Por favor, tente novamente.');
+      console.error('Update error:', err);
     }
   };
 
@@ -99,8 +145,17 @@ const SetoresList = () => {
   return (
     <div className="container mt-4">
       <h2>Setores da PMCE</h2>
+      
+      {/* Debug info - remova após testar */}
+      <div className="alert alert-info mb-3">
+        <strong>Debug:</strong> User: {user ? 'Logado' : 'Não logado'} | 
+        IsAdmin: {isAdmin ? 'Sim' : 'Não'} | 
+        User Object: {JSON.stringify(user, null, 2)}
+      </div>
+      
       {error && <div className="alert alert-danger">{error}</div>}
       
+      {/* Botão "Adicionar" só aparece para admins */}
       {isAdmin && (
         <Link to="/setores/novo" className="btn btn-primary mb-3">
           Adicionar Novo Setor
@@ -151,6 +206,7 @@ const SetoresList = () => {
               <th>Comandante</th>
               <th>Telefone</th>
               <th>AIS</th>
+              {/* Coluna "Ações" só aparece para admins */}
               {isAdmin && <th>Ações</th>}
             </tr>
           </thead>
@@ -172,10 +228,11 @@ const SetoresList = () => {
                     <td>{setor.commander}</td>
                     <td>{setor.phone}</td>
                     <td>{setor.ais}</td>
+                    {/* Botões de ação só aparecem para admins */}
                     {isAdmin && (
                       <td>
                         <Link
-                          to={`/setores/editar/${setor._id}`}
+                          to={`/sectors/edit/${setor._id}`}
                           className="btn btn-sm btn-warning me-2"
                         >
                           Editar
@@ -204,8 +261,8 @@ const SetoresList = () => {
                                 </tr>
                               </thead>
                               <tbody>
-                                {setor.subitems.map(item => (
-                                  <tr key={item.id}>
+                                {setor.subitems.map((item, index) => (
+                                  <tr key={item.id || index}>
                                     <td>{item.name}</td>
                                     <td>{item.address}</td>
                                     <td>{item.phone}</td>

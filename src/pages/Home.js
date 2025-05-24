@@ -14,7 +14,7 @@ const Home = () => {
           Acesse a lista de setores para visualizar informações detalhadas sobre batalhões, 
           companhias, comandantes, telefones e AIS.
         </p>
-        <Link to="/setores" className="btn btn-primary btn-lg">
+        <Link to="/sectors" className="btn btn-primary btn-lg">
           Ver Setores
         </Link>
       </div>

@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
+import { jwtDecode } from 'jwt-decode';
 import { login } from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 
@@ -19,19 +20,63 @@ const Login = () => {
     try {
       const data = await login(values);
       
-      // For the mock authentication
+      console.log('Login response:', data);
+      
+      // Para autenticação mock
       if (data.token === 'mock-jwt-token') {
-        localStorage.setItem('user', JSON.stringify(data.user));
-        authLogin(data.token);
-        navigate('/setores');
+        console.log('Mock login - user data:', data.user);
+        authLogin(data.token, data.user);
+        navigate('/sectors');
         return;
       }
       
-      // For real backend authentication
-      authLogin(data.token);
-      navigate('/setores');
+      // Para autenticação real com backend
+      console.log('Real login - token:', data.token);
+      
+      let userData = null;
+      
+      // Verifica se o backend já retorna os dados completos do usuário
+      if (data.user && typeof data.user === 'object') {
+        console.log('Using complete user data from login response:', data.user);
+        userData = data.user;
+      } else {
+        // Se não tem dados completos, decodifica o JWT
+        try {
+          const decoded = jwtDecode(data.token);
+          console.log('Decoded JWT:', decoded);
+          
+          // Extrai os dados do JWT decodificado
+          // Verifica diferentes possíveis estruturas do JWT
+          userData = {
+            _id: decoded._id || decoded.id || decoded.sub,
+            id: decoded._id || decoded.id || decoded.sub,
+            email: decoded.email,
+            isAdmin: decoded.isAdmin || false,
+            // Adicione outros campos conforme necessário
+            name: decoded.name,
+            role: decoded.role
+          };
+          
+          console.log('Constructed user data from JWT:', userData);
+          
+          // Se ainda não temos um ID válido, algo está errado
+          if (!userData._id && !userData.id) {
+            throw new Error('JWT não contém ID do usuário válido');
+          }
+          
+        } catch (decodeError) {
+          console.error('Error decoding JWT:', decodeError);
+          throw new Error('Token inválido recebido do servidor');
+        }
+      }
+      
+      // Faz o login com os dados do usuário
+      authLogin(data.token, userData);
+      navigate('/sectors');
+      
     } catch (err) {
-      setError('Credenciais inválidas. Por favor, tente novamente.');
+      console.error('Login error:', err);
+      setError(err.message || 'Credenciais inválidas. Por favor, tente novamente.');
     } finally {
       setSubmitting(false);
     }
