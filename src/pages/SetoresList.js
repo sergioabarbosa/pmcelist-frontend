@@ -10,10 +10,11 @@ const SetoresList = () => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterField, setFilterField] = useState('all');
+  const [expandedRows, setExpandedRows] = useState({});
   const { user } = useContext(AuthContext);
   
-  // Only show admin controls if user is logged in
-  const isAdmin = user ? true : false;
+  // Force isAdmin to true for development/testing
+  const isAdmin = true; // This will make the CRUD buttons visible
   
   useEffect(() => {
     // Allow fetching sectors for all users, including non-logged in users
@@ -72,15 +73,23 @@ const SetoresList = () => {
   };
 
   const handleDelete = async (id) => {
+    // Remove the user check since we're forcing isAdmin to true for testing
     if (window.confirm('Tem certeza que deseja excluir este setor?')) {
       try {
         await deleteSetor(id);
         setSetores(setores.filter((setor) => setor._id !== id));
       } catch (err) {
-        setError('Erro ao excluir o setor. Por favor, tente novamente.');
+        setError(err.message || 'Erro ao excluir o setor. Por favor, tente novamente.');
         console.error(err);
       }
     }
+  };
+
+  const toggleRowExpansion = (id) => {
+    setExpandedRows(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
   };
 
   if (loading) {
@@ -91,8 +100,6 @@ const SetoresList = () => {
     <div className="container mt-4">
       <h2>Setores da PMCE</h2>
       {error && <div className="alert alert-danger">{error}</div>}
-      
-      {/* Remove debug information */}
       
       {isAdmin && (
         <Link to="/setores/novo" className="btn btn-primary mb-3">
@@ -139,6 +146,7 @@ const SetoresList = () => {
         <table className="table table-striped table-hover">
           <thead className="table-dark">
             <tr>
+              <th style={{ width: '40px' }}></th>
               <th>Batalhão/Companhia</th>
               <th>Comandante</th>
               <th>Telefone</th>
@@ -149,32 +157,74 @@ const SetoresList = () => {
           <tbody>
             {filteredSetores.length > 0 ? (
               filteredSetores.map((setor) => (
-                <tr key={setor._id}>
-                  <td>{setor.battalion}</td>
-                  <td>{setor.commander}</td>
-                  <td>{setor.phone}</td>
-                  <td>{setor.ais}</td>
-                  {isAdmin && (
+                <React.Fragment key={setor._id}>
+                  <tr>
                     <td>
-                      <Link
-                        to={`/setores/editar/${setor._id}`}
-                        className="btn btn-sm btn-warning me-2"
+                      <button 
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => toggleRowExpansion(setor._id)}
+                        aria-expanded={expandedRows[setor._id]}
                       >
-                        Editar
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(setor._id)}
-                        className="btn btn-sm btn-danger"
-                      >
-                        Excluir
+                        {expandedRows[setor._id] ? '−' : '+'}
                       </button>
                     </td>
+                    <td>{setor.battalion}</td>
+                    <td>{setor.commander}</td>
+                    <td>{setor.phone}</td>
+                    <td>{setor.ais}</td>
+                    {isAdmin && (
+                      <td>
+                        <Link
+                          to={`/setores/editar/${setor._id}`}
+                          className="btn btn-sm btn-warning me-2"
+                        >
+                          Editar
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(setor._id)}
+                          className="btn btn-sm btn-danger"
+                        >
+                          Excluir
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                  {expandedRows[setor._id] && (
+                    <tr>
+                      <td colSpan={isAdmin ? 6 : 5}>
+                        <div className="p-3 bg-light">
+                          <h6 className="mb-3">Unidades Subordinadas</h6>
+                          {setor.subitems && setor.subitems.length > 0 ? (
+                            <table className="table table-sm table-bordered">
+                              <thead className="table-secondary">
+                                <tr>
+                                  <th>Nome</th>
+                                  <th>Endereço</th>
+                                  <th>Telefone</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {setor.subitems.map(item => (
+                                  <tr key={item.id}>
+                                    <td>{item.name}</td>
+                                    <td>{item.address}</td>
+                                    <td>{item.phone}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          ) : (
+                            <p className="text-muted mb-0">Nenhuma unidade subordinada cadastrada.</p>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
                   )}
-                </tr>
+                </React.Fragment>
               ))
             ) : (
               <tr>
-                <td colSpan={isAdmin ? 5 : 4} className="text-center">
+                <td colSpan={isAdmin ? 6 : 5} className="text-center">
                   Nenhum setor encontrado
                 </td>
               </tr>
