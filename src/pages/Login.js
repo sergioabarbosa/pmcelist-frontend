@@ -51,13 +51,27 @@ const Login = () => {
             _id: decoded._id || decoded.id || decoded.sub,
             id: decoded._id || decoded.id || decoded.sub,
             email: decoded.email,
-            isAdmin: decoded.isAdmin || false,
+            // Verifica diferentes formas de determinar se é admin
+            isAdmin: decoded.isAdmin || decoded.admin || decoded.role === 'admin' || decoded.role === 'ADMIN' || false,
             // Adicione outros campos conforme necessário
             name: decoded.name,
             role: decoded.role
           };
           
+          console.log('JWT decoded fields:', {
+            isAdmin: decoded.isAdmin,
+            admin: decoded.admin,
+            role: decoded.role,
+            allFields: Object.keys(decoded)
+          });
+          
           console.log('Constructed user data from JWT:', userData);
+          
+          // TEMPORÁRIO: Force admin para desenvolvimento (REMOVER EM PRODUÇÃO)
+          if (process.env.NODE_ENV === 'development') {
+            userData.isAdmin = true;
+            console.log('DEVELOPMENT: Forcing isAdmin to true');
+          }
           
           // Se ainda não temos um ID válido, algo está errado
           if (!userData._id && !userData.id) {
