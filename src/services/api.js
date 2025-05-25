@@ -10,33 +10,36 @@ const api = axios.create({
 // Add request interceptor to include auth token in all requests
 api.interceptors.request.use(
   (config) => {
-    console.log('API Request:', config.method?.toUpperCase(), config.url);
+    console.log('API Request Interceptor: Sending', config.method?.toUpperCase(), 'request to', config.url);
     
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('Using stored token');
+      console.log('API Request Interceptor: Using stored authentication token.');
     } else {
       // For testing purposes, add a default admin token only if no token exists
       config.headers.Authorization = 'Bearer test-admin-token';
-      console.log('Using default test token');
+      console.log('API Request Interceptor: No token found, using default test token.');
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('API Request Interceptor Error:', error);
+    return Promise.reject(error);
+  }
 );
 
 // Add response interceptor for logging and error handling
 api.interceptors.response.use(
   (response) => {
-    console.log('API Response:', response.status, response.config.url);
+    console.log('API Response Interceptor: Received', response.status, 'from', response.config.url);
     return response;
   },
   (error) => {
-    console.error('API Error:', error.response ? error.response.status : 'Network Error', 
-                 error.config ? error.config.url : 'Unknown URL');
+    console.error('API Response Interceptor Error:', error.response ? error.response.status : 'Network Error', 
+                  error.config ? `for URL: ${error.config.url}` : 'Unknown URL');
     if (error.response) {
-      console.error('Error response data:', error.response.data);
+      console.error('API Response Interceptor: Error response data:', error.response.data);
     }
     return Promise.reject(error);
   }
@@ -44,10 +47,10 @@ api.interceptors.response.use(
 
 // Função auxiliar para tratamento padronizado de erros
 const handleApiError = (error, operation, id = '') => {
-  console.error(`Error ${operation}${id ? ` sector ${id}` : ''}:`, error);
+  console.error(`API Error - ${operation} sector${id ? ` ${id}` : ''}:`, error);
   if (error.response) {
-    console.error('Response status:', error.response.status);
-    console.error('Response data:', error.response.data);
+    console.error('API Error Details: Response status:', error.response.status);
+    console.error('API Error Details: Response data:', error.response.data);
   }
   throw error;
 };
@@ -68,33 +71,41 @@ const formatSectorData = (sectorData) => {
 // API functions - Mantendo as rotas em inglês para corresponder ao backend
 export const getSetores = async () => {
   try {
-    console.log('Fetching all sectors');
+    console.log('API Call: Attempting to fetch all sectors...');
     const response = await api.get('/sectors');
-    console.log('Fetched sectors:', response.data.length);
+    // Adjusted log to show the entire sectors array
+    console.log(`API Call: Successfully fetched ${response.data.length} sectors. Data:`, response.data); 
     return response.data;
   } catch (error) {
-    return handleApiError(error, 'fetching');
+    return handleApiError(error, 'fetching all');
   }
 };
 
+// This call is for testing and will run immediately when the file is imported/executed.
+// For a production app, you'd typically call this within a component or effect.
+getSetores()
+  // Adjusted log to show the entire sectors array
+  .then((sectors) => console.log('Initial fetch result (all sectors data):', sectors)) 
+  .catch((error) => console.error('Initial fetch error (all sectors):', error));
+
+
 export const getSetorById = async (id) => {
   try {
-    console.log(`Fetching sector with ID: ${id}`);
+    console.log(`API Call: Attempting to fetch sector with ID: ${id}...`);
     const response = await api.get(`/sectors/${id}`);
-    console.log('Fetched sector:', response.data);
+    console.log(`API Call: Successfully fetched sector ID ${id}:`, response.data);
     return response.data;
   } catch (error) {
-    return handleApiError(error, 'fetching', id);
+    return handleApiError(error, 'fetching by ID', id);
   }
 };
 
 export const createSetor = async (sectorData) => {
   try {
-    console.log('Creating new sector with data:', sectorData);
-    // Usar o mesmo formato para criar e atualizar
+    console.log('API Call: Attempting to create new sector with data:', sectorData);
     const dataToSend = formatSectorData(sectorData);
     const response = await api.post('/sectors', dataToSend);
-    console.log('Created sector:', response.data);
+    console.log('API Call: Successfully created sector:', response.data);
     return response.data;
   } catch (error) {
     return handleApiError(error, 'creating');
@@ -103,10 +114,10 @@ export const createSetor = async (sectorData) => {
 
 export const updateSetor = async (id, sectorData) => {
   try {
-    console.log(`Updating sector ${id} with data:`, sectorData);
+    console.log(`API Call: Attempting to update sector ${id} with data:`, sectorData);
     const dataToSend = formatSectorData(sectorData);
     const response = await api.put(`/sectors/${id}`, dataToSend);
-    console.log('Update response:', response.data);
+    console.log(`API Call: Successfully updated sector ${id}:`, response.data);
     return response.data;
   } catch (error) {
     return handleApiError(error, 'updating', id);
@@ -115,9 +126,9 @@ export const updateSetor = async (id, sectorData) => {
 
 export const deleteSetor = async (id) => {
   try {
-    console.log(`Deleting sector with ID: ${id}`);
+    console.log(`API Call: Attempting to delete sector with ID: ${id}...`);
     const response = await api.delete(`/sectors/${id}`);
-    console.log('Delete response:', response.data);
+    console.log(`API Call: Successfully deleted sector ID ${id}:`, response.data);
     return response.data;
   } catch (error) {
     return handleApiError(error, 'deleting', id);
@@ -127,14 +138,14 @@ export const deleteSetor = async (id) => {
 // Auth functions
 export const login = async (credentials) => {
   try {
-    console.log('Attempting login with credentials');
+    console.log('API Call: Attempting user login...');
     const response = await api.post('/users/login', credentials);
-    console.log('Login successful');
+    console.log('API Call: Login successful.');
     
     // Store token in localStorage for future requests
     if (response.data.token) {
       localStorage.setItem('token', response.data.token);
-      console.log('Token stored in localStorage');
+      console.log('API Call: Authentication token stored in localStorage.');
     }
     
     return response.data;

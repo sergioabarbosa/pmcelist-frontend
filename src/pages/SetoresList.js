@@ -256,8 +256,9 @@ const SetoresList = () => {
                               <thead className="table-secondary">
                                 <tr>
                                   <th>Nome</th>
-                                  <th>Endereço</th>
+                                  <th>Comandante</th>
                                   <th>Telefone</th>
+                                  <th>Endereço</th>
                                 </tr>
                               </thead>
                               <tbody>
