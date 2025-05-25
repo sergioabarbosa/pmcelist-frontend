@@ -259,6 +259,7 @@ const SetoresList = () => {
                                   <th>Comandante</th>
                                   <th>Telefone</th>
                                   <th>Endereço</th>
+                                  <th>AIS</th>
                                 </tr>
                               </thead>
                               <tbody>
